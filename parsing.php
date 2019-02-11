@@ -45,8 +45,21 @@ foreach ($xml->channel->item as $value) {
     echo "<br>Revue : ".$res_regex2[2];
     echo "<br>";
 
-        $sql = "INSERT INTO appelAPublication ( titreAppel,resume,lien)VALUES ('$title', '$description','$link')";
+    $existsql = "SELECT EXISTS( SELECT * FROM appelAPublication WHERE titreAppel = '$title' AND resume = '$description' AND lien = '$link' AND dateFinSoumission = '$res_regex[1]')";
+
+    $stmt = $conn->query($existsql);
+    $count = $stmt->fetch();
+
+    //echo $existsql;
+    //echo $count[0];
+
+    if ($count[0] > 0) {
+        //echo "exist";
+    }else{
+        $sql = "INSERT INTO appelAPublication ( titreAppel,resume,lien,dateFinSoumission)VALUES ('$title', '$description','$link', '$res_regex[1]')";
         $conn->exec($sql);
+        //echo "existe pas";
+    }
 }
 
 }catch(PDOException $e)
