@@ -19,59 +19,57 @@ $xml = new simpleXMLElement($contenu);
 <?php
 
 try{
-$conn = new PDO("mysql:host=localhost;dbname=Projet_call", "root", "Ayman789520");
-
+//co a la base
+$conn = new PDO("mysql:host=mysql-projet2jpbanj.alwaysdata.net;dbname=projet2jpbanj_bdd", "176186", "projetBANJ");
 $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
 // parcour de l'objet pour extraire les données
 foreach ($xml->channel->item as $value) {
 
+    //attribution des variables et enleve les apo
+    $title = str_replace("'", " ", $value->title);
+    $link = str_replace("'", " ", $value->link);
+    $description = str_replace("'", " ", $value->description);
+    $datePu = date("d/M/20y");
+    //récupere la date de fin depuis la description avec les expression réguliere 
+    preg_match("`([0-9]*[a-z]* [a-zA-Z]* [0-9]{4})`", $value->description, $res_regex);
+    $datefin = $res_regex[1];
+    //récupere le nom de la revu pour pouvoire récuperer lid 
+    preg_match("`(from (.*), final)`", $value->description, $res_regex2);
+    $revue = $res_regex2[2];
 
-    $title = $value->title;
-    $title = str_replace("'", " ", $title);
-    $link = $value->link;
-    $link = str_replace("'", " ", $link);
-    $description = $value->description;
-    $description = str_replace("'", " ", $description);
-
+    //affichage de test
 	echo "<br>";
 	echo "<li> Titre: ".$value->title;"</li>";
 	echo "<li> Lien: ".$value->link;"</li>";
 	echo "<li> Description: ".$value->description;"</li>";
-	echo "<br>";
-    preg_match("`([0-9]*[a-z]* [a-zA-Z]* [0-9]{4})`", $value->description, $res_regex);
-    echo "Deadline : ".$res_regex[1];
-        $datefin = $res_regex[1];
-    preg_match("`(from (.*), final)`", $value->description, $res_regex2);
-    echo "<br>Revue : ".$res_regex2[2];
-    echo "<br>";
+	echo "<br>";   
+    echo "Deadline : ".$datefin;
+    echo "<br>Revue : ".$revue;
+    echo "<br> date publication :".$datePu."<br>";
 
-    $existsql = "SELECT EXISTS( SELECT * FROM appelAPublication WHERE titreAppel = '$title' AND resume = '$description' AND lien = '$link' AND dateFinSoumission = '$res_regex[1]')";
-
+    //requete sql pour savoir si lappell exist deja dans la bdd
+    $existsql = "SELECT EXISTS( SELECT * FROM appelAPublication WHERE titreAppel = '$title' AND resume = '$description' AND lien = '$link' AND dateFinSoumission = '$datefin')";
     $stmt = $conn->query($existsql);
     $count = $stmt->fetch();
 
-    //echo $existsql;
-    //echo $count[0];
-
+    // if pour savoir si la requete retourne qlq chose
     if ($count[0] > 0) {
-        //echo "exist";
+        //si elle existe deja on fait rien
     }else{
-        $sql = "INSERT INTO appelAPublication ( titreAppel,resume,lien,dateFinSoumission)VALUES ('$title', '$description','$link', '$res_regex[1]')";
+        //sinon on insert lappel dans la base
+        $sql = "INSERT INTO appelAPublication ( titreAppel,resume,lien,dateFinSoumission,datePublication)VALUES ('$title', '$description','$link', '$res_regex[1]', '$datePu')";
         $conn->exec($sql);
-        //echo "existe pas";
     }
 }
-
 }catch(PDOException $e)
     {
     echo $sql . "<br>" . $e->getMessage();
     }
-
+//ferme le parsing
 curl_close($curl);
+
+//fermme la co
 $conn = null;
-
-
-
-   
 
 ?>
