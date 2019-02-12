@@ -1,46 +1,5 @@
-<!DOCTYPE html>
-<html>
-<head>
-<style>
-table, th, td {
-    border: 1px solid black;
-}
-</style>
-</head>
-<body>
-
 <?php
-
-        $servername = "127.0.0.1";
-        $username = "Root";
-        $password = "root";
-        $dbname = "Projet_call";
-
-        // Create connection
-        $conn = new mysqli($servername, $username, $password, $dbname);
-        // Check connection
-        if ($conn->connect_error) {
-            die("Connection failed: " . $conn->connect_error);
-        }
-        // $sql = "SELECT issn,titre,cat,cnrs,fnege,hceres FROM revues";
-        // $result = $conn->query($sql);
-        // //echo "$result";
-        // echo "<br>";
-        // echo "<h1> <strong> Listes des Revues </strong> : </h1> ";
-        // echo "<br>";
-
-
-        // if ($result->num_rows > 0) {
-        //     echo "<table> <tr> <th>ISSN</th> <th>Titre</th> <th>Cat</th>  <th>cnrs</th>  <th>fnege</th>  <th>hceres</th> </tr>";
-        //     // output data of each row
-        //     while($row = $result->fetch_assoc()) {
-        //         echo "<tr><td>".$row["issn"]."</td><td>".$row["titre"]." </td><td>".$row["cat"]."</td><td>".$row["cnrs"]."</td><td>".$row["fnege"]."</td><td>".$row["hceres"]."</td>             </tr>";
-        //     }
-        //     echo "</table>";
-        // } else {
-        //     echo "0 results";
-        // }
-
+include("../bdd/pdo.php");
 // création d'une nouvelle ressource cURL
 $curl = curl_init();
 
@@ -58,30 +17,59 @@ $xml = new simpleXMLElement($contenu);
 <h1>Listes les Calls </h1>
 <ul>
 <?php
+
+try{
+//co a la base
+$conn = new PDO("mysql:host=mysql-projet2jpbanj.alwaysdata.net;dbname=projet2jpbanj_bdd", "176186", "projetBANJ");
+$conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
 // parcour de l'objet pour extraire les données
 foreach ($xml->channel->item as $value) {
 
+    //attribution des variables et enleve les apo
+    $title = str_replace("'", " ", $value->title);
+    $link = str_replace("'", " ", $value->link);
+    $description = str_replace("'", " ", $value->description);
+    $datePu = date("d/M/20y");
+    //récupere la date de fin depuis la description avec les expression réguliere 
+    preg_match("`([0-9]*[a-z]* [a-zA-Z]* [0-9]{4})`", $value->description, $res_regex);
+    $datefin = $res_regex[1];
+    //récupere le nom de la revu pour pouvoire récuperer lid 
+    preg_match("`(from (.*), final)`", $value->description, $res_regex2);
+    $revue = $res_regex2[2];
+
+    //affichage de test
 	echo "<br>";
 	echo "<li> Titre: ".$value->title;"</li>";
 	echo "<li> Lien: ".$value->link;"</li>";
 	echo "<li> Description: ".$value->description;"</li>";
-	echo "<br>";
+	echo "<br>";   
+    echo "Deadline : ".$datefin;
+    echo "<br>Revue : ".$revue;
+    echo "<br> date publication :".$datePu."<br>";
 
-	// Insertion dans la basse de donnés
-	$sql_query_insert ="INSERT INTO appelAPublication ( titreAppel,résumé,lien)
- 						VALUES ('$value->title', '$value->description','$value->link')";
+    //requete sql pour savoir si lappell exist deja dans la bdd
+    $existsql = "SELECT EXISTS( SELECT * FROM appelAPublication WHERE titreAppel = '$title' AND resume = '$description' AND lien = '$link' AND dateFinSoumission = '$datefin')";
+    $stmt = $conn->query($existsql);
+    $count = $stmt->fetch();
 
-	if ($conn->query($sql_query_insert) === TRUE) {
-    echo "Insertion OK";
-} else {
-    echo "Error: " . $sql_query_insert . "<br>" . $conn->error;
-}	
+    // if pour savoir si la requete retourne qlq chose
+    if ($count[0] > 0) {
+        //si elle existe deja on fait rien
+    }else{
+        //sinon on insert lappel dans la base
+        $sql = "INSERT INTO appelAPublication ( titreAppel,resume,lien,dateFinSoumission,datePublication)VALUES ('$title', '$description','$link', '$res_regex[1]', '$datePu')";
+        $conn->exec($sql);
+    }
 }
-// fermeture de la session cURL
+}catch(PDOException $e)
+    {
+    echo $sql . "<br>" . $e->getMessage();
+    }
+//ferme le parsing
 curl_close($curl);
 
-// fermeture de la connexion a la bd
-$conn->close();
+//fermme la co
+$conn = null;
 
 ?>
-</ul> </body>
