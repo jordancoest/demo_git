@@ -1,14 +1,13 @@
 <?php
-require_once 'js.php';
-
+require_once 'erreur.php';
 // string $db : nom de la base de données à laquelle se connecter
 function connexpdo(string $db)
 {
     $sgbd = "mysql"; // choix de MySQL
-    $host = "localhost";
+    $host = "mysql-projet2jpbanj.alwaysdata.net";
     $charset = "UTF8";
-    $user = "root"; // identifiant utilisateur
-    $pass = "root"; // mot de passe
+    $user = "176186"; // identifiant utilisateur
+    $pass = "projetBANJ"; // mot de passe
     try {
         $pdo = new PDO("$sgbd:host=$host;dbname=$db;charset=$charset", $user , $pass);
         // force le lancement d'exception en cas d'erreurs d'exécution de requêtes SQL
