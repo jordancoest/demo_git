@@ -14,6 +14,14 @@ foreach($html->find('img.imgwidget') as $e)
 
 // SJR
 $sjr = $html->find('div.cellcontent', 1)->find('td');
-echo 'SJR : ' . end($sjr);
+echo 'SJR : ' . end($sjr) . '<br>';
+
+// EDITEUR
+foreach($html->find('a[title="view all publisher\'s journals"]') as $e)
+    echo "Nom de l'éditeur : ".$e->innertext . '<br>';
+
+// LIEN REVUE
+foreach($html->find('a[id="question_journal"]') as $e)
+    echo "Lien vers l'éditeur : ".$e->href . '<br>';
 
 ?>
