@@ -1,15 +1,12 @@
 <?php
-
 include ("enleverCaracteresSpeciaux.php");
-include ("BD/connexpdo.inc.php");
-
-
+include ("connexpdo.inc.php");
     function chaine_perc($str){
        $tab_des_id = [];
        $i=0;
             $q = strtolower(trim(enleverCaracteresSpeciaux($str)));
             $query = "SELECT idRevue,titreRevue FROM revue ";
-            $idcom = connexpdo("prj");            
+            $idcom = connexpdo("projet2jpbanj_bdd");            
             $result = $idcom->query($query);   
                 while ($row = $result->fetch(PDO::FETCH_ASSOC)) {        
                     similar_text($q, strtolower(enleverCaracteresSpeciaux($row['titreRevue'])), $perc);
@@ -20,9 +17,6 @@ include ("BD/connexpdo.inc.php");
                 }   
                 return $tab_des_id;           
             $idcom = null;
-
             
     }
-
-
 ?>
