@@ -1,5 +1,6 @@
 <?php
 include("../bdd/pdo.php");
+include("compre_text.php");
 // création d'une nouvelle ressource cURL
 $curl = curl_init();
 
@@ -30,13 +31,25 @@ foreach ($xml->channel->item as $value) {
     $title = str_replace("'", " ", $value->title);
     $link = str_replace("'", " ", $value->link);
     $description = str_replace("'", " ", $value->description);
-    $datePu = date("d/M/20y");
+    $datePu = date("Y-m-d");
     //récupere la date de fin depuis la description avec les expression réguliere 
     preg_match("`([0-9]*[a-z]* [a-zA-Z]* [0-9]{4})`", $value->description, $res_regex);
     $datefin = $res_regex[1];
+    $datefin = strtotime($datefin);
+    $datefin = date('Y-m-d',$datefin);
     //récupere le nom de la revu pour pouvoire récuperer lid 
     preg_match("`(from (.*), final)`", $value->description, $res_regex2);
     $revue = $res_regex2[2];
+    //on récupere l'identifiant depuis le nom de la revu, on fait appel à une fonction externe
+    $idRevue = chaine_perc($revue);
+    if($idRevue != null){
+        $idRevue = max($idRevue);
+        $idRevue = $idRevue['idRevue'];
+    }else{
+        $idRevue = 2848;
+    }
+
+
 
     //affichage de test
 	echo "<br>";
@@ -45,8 +58,9 @@ foreach ($xml->channel->item as $value) {
 	echo "<li> Description: ".$value->description;"</li>";
 	echo "<br>";   
     echo "Deadline : ".$datefin;
+    echo "<br>id revue : ".$idRevue;
     echo "<br>Revue : ".$revue;
-    echo "<br> date publication :".$datePu."<br>";
+    echo "<br> date publication : ".$datePu."<br>";
 
     //requete sql pour savoir si lappell exist deja dans la bdd
     $existsql = "SELECT EXISTS( SELECT * FROM appelAPublication WHERE titreAppel = '$title' AND resume = '$description' AND lien = '$link' AND dateFinSoumission = '$datefin')";
@@ -54,11 +68,9 @@ foreach ($xml->channel->item as $value) {
     $count = $stmt->fetch();
 
     // if pour savoir si la requete retourne qlq chose
-    if ($count[0] > 0) {
-        //si elle existe deja on fait rien
-    }else{
+    if ($count[0] == 0){
         //sinon on insert lappel dans la base
-        $sql = "INSERT INTO appelAPublication ( titreAppel,resume,lien,dateFinSoumission,datePublication)VALUES ('$title', '$description','$link', '$res_regex[1]', '$datePu')";
+        $sql = "INSERT INTO appelAPublication ( titreAppel,resume,lien,dateFinSoumission,datePublication, idRevue, titreRevueTrouve)VALUES ('$title', '$description','$link', '$datefin', '$datePu', '$idRevue', '$revue')";
         $conn->exec($sql);
     }
 }
