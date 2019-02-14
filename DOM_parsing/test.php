@@ -1,6 +1,6 @@
 <?php
 
-    require_once './simplehtmldom_1_7/simple_html_dom.php';
+    require_once 'simple_html_dom.php';
 
 	$html = file_get_html('http://www.emeraldgrouppublishing.com/authors/writing/calls.htm?id=8131');
 
