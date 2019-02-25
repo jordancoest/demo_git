@@ -1,58 +1,88 @@
 <?php
 include('simple_html_dom.php'); // Manuel : http://simplehtmldom.sourceforge.net/manual.htm
 
-$idSJR = 20191 ; // A FAIRE PASSER EN PARAMETRE DE LA FONCTION DE PARSING
+//co a la base
+$db = new PDO("mysql:host=mysql-projet2jpbanj.alwaysdata.net;dbname=projet2jpbanj_bdd", "176186", "projetBANJ");
+$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-// détermination de la page source
-$html = file_get_html('https://www.scimagojr.com/journalsearch.php?q='.$idSJR.'&tip=sid');
+$requeteListeDesID = "SELECT idSJR FROM revue limit 1000";
+$stmt = $db->query($requeteListeDesID);
+$listeDesID = $stmt->fetchall();
+//var_dump($listeDesID);
+foreach ($listeDesID as $idSJR) {
 
-// Titre de la revue
-$titre = $html->find('title', 0);
-echo 'Titre : ' . $titre->innertext . '<br>';
+    //var_dump ($idSJR);
+    if ($idSJR[0] != NULL) parsing_revue($idSJR[0], $db);
 
-// H-INDEX
+}
 
-$hindex = $html->find('div.hindexnumber', 0)->innertext;
-echo 'H-INDEX : ' . $hindex . '<br>';
+function parsing_revue($idRevueSJR, $bdd){
 
-// LIEN VERS L'IMAGE RECAP
+    // détermination de la page source
+    $html = file_get_html('https://www.scimagojr.com/journalsearch.php?q='.$idRevueSJR.'&tip=sid');
 
-$widget = $html->find('img.imgwidget', 0)->src;
-echo 'Lien vers l\'image récap : ' . $widget . '<br>';
+    // Titre de la revue
+    $titre = $html->find('title', 0)->innertext;
+    //echo 'Titre : ' . $titre . '<br>';
 
-// SJR
-$sjr = $html->find('div.cellcontent', 1)->find('td');
-echo 'SJR : ' . end($sjr) . '<br>';
+    // H-INDEX
 
-// EDITEUR
+    $hindex = $html->find('div.hindexnumber', 0)->innertext;
+    //echo 'H-INDEX : ' . $hindex . '<br>';
 
-$editeur = $html->find('a[title="view all publisher\'s journals"]', 0)->innertext;
-echo 'Lien vers l\'éditeur : ' . $editeur . '<br>';
+    // LIEN VERS L'IMAGE RECAP
 
-// LIEN EDITEUR
+    $widget = $html->find('img.imgwidget', 0)->src;
+    //echo 'Lien vers l\'image récap : ' . $widget . '<br>';
 
-$lien = $html->find('a[id="question_journal"]', 0)->href;
-echo 'Lien vers l\'éditeur : ' . $lien . '<br>';
+    // SJR
+    $listeSJR = $html->find('div.cellcontent', 1)->find('td');
+    $sjr = end($listeSJR)->innertext;
+    //echo 'SJR : ' . $sjr . '<br>';
+
+    // EDITEUR
+
+    $editeur = $html->find('a[title="view all publisher\'s journals"]', 0)->innertext;
+    //echo 'Nom de l\'éditeur : ' . $editeur . '<br>';
+
+    // LIEN EDITEUR
+
+    if (isset($html->find('a[id="question_journal"]', 0)->href)){
+        $lien = $html->find('a[id="question_journal"]', 0)->href;
+        //echo 'Lien vers l\'éditeur : ' . $lien . '<br><br>';
+    }
+    else{
+        $lien = 'Pas de lien dispo pour l\'éditeur';
+        //echo $lien.'<br><br>';
+    }
+
+    $sql = "UPDATE revue SET titreRevue='$titre', hIndex=$hindex, widgetRecap='$widget', sjr=$sjr WHERE idSJR=$idRevueSJR";
+    $bdd->exec($sql);
 
 
-/*
-** VERSION AVEC FOREACH
+    /*
+    ** VERSION AVEC FOREACH
 
-// H-INDEX
-foreach($html->find('div.hindexnumber') as $e)
-echo 'H-index : '.$e->innertext . '<br>';
+    // H-INDEX
+    foreach($html->find('div.hindexnumber') as $e)
+    echo 'H-index : '.$e->innertext . '<br>';
 
-// LIEN VERS L'IMAGE RECAP
-foreach($html->find('img.imgwidget') as $e)
-echo "Lien vers l'image récap : ".$e->src . '<br>';
+    // LIEN VERS L'IMAGE RECAP
+    foreach($html->find('img.imgwidget') as $e)
+    echo "Lien vers l'image récap : ".$e->src . '<br>';
 
-// EDITEUR
-foreach($html->find('a[title="view all publisher\'s journals"]') as $e)
-echo "Nom de l'éditeur : ".$e->innertext . '<br>';
+    // EDITEUR
+    foreach($html->find('a[title="view all publisher\'s journals"]') as $e)
+    echo "Nom de l'éditeur : ".$e->innertext . '<br>';
 
-// LIEN VERS L'EDITEUR
-foreach($html->find('a[id="question_journal"]') as $e)
-echo "Lien vers l'éditeur : ".$e->href . '<br>';
+    // LIEN VERS L'EDITEUR
+    foreach($html->find('a[id="question_journal"]') as $e)
+    echo "Lien vers l'éditeur : ".$e->href . '<br>';
 
-*/
+    */
+
+}
+
+echo "fini !";
+
 ?>
