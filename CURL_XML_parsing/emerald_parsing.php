@@ -1,6 +1,8 @@
 <?php
 include("../bdd/pdo.php");
 include("compre_text.php");
+
+set_time_limit(200000);
 // création d'une nouvelle ressource cURL
 $curl = curl_init();
 
@@ -21,7 +23,7 @@ $xml = new simpleXMLElement($contenu);
 
 try{
 //co a la base
-$conn = new PDO("mysql:host=mysql-projet2jpbanj.alwaysdata.net;dbname=projet2jpbanj_bdd", "176186", "projetBANJ");
+$conn = connexpdo("projet2jpbanj_bdd");
 $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 // parcour de l'objet pour extraire les données
@@ -30,7 +32,7 @@ foreach ($xml->channel->item as $value) {
     //attribution des variables et enleve les apo
     $title = str_replace("'", " ", $value->title);
     $link = str_replace("'", " ", $value->link);
-    $description = str_replace("'", " ", $value->description);
+    $description = resume($value->link);
     $datePu = date("Y-m-d");
     //récupere la date de fin depuis la description avec les expression réguliere 
     preg_match("`([0-9]*[a-z]* [a-zA-Z]* [0-9]{4})`", $value->description, $res_regex);
@@ -55,7 +57,7 @@ foreach ($xml->channel->item as $value) {
 	echo "<br>";
 	echo "<li> Titre: ".$value->title;"</li>";
 	echo "<li> Lien: ".$value->link;"</li>";
-	echo "<li> Description: ".$value->description;"</li>";
+	echo "<li> Description: ".$description;"</li>";
 	echo "<br>";   
     echo "Deadline : ".$datefin;
     echo "<br>id revue : ".$idRevue;
@@ -84,4 +86,46 @@ curl_close($curl);
 //fermme la co
 $conn = null;
 
+function resume($lien){
+    require_once './simplehtmldom_1_7/simple_html_dom.php';
+        
+    $html = file_get_html($lien);
+
+    $text = ""; 
+    foreach($html->find('div[id="pgSectionCn"] p') as $e){
+        //echo "div ".$e->innertext  . '<br>';
+        $text = $text.$e->innertext;
+    }
+    $tab = array("<span>","<p>");
+    $text = strip_tags_content($text, "<span>");
+    $text = strip_tags($text);
+    $text = str_replace("&nbsp;", " ", $text);
+    $text = str_replace("'", "", $text);
+    $rest = substr($text, 0, 1000);
+
+    return $rest;
+/*    echo "<script type='text/javascript'>
+    alert('$rest');
+    </script>";*/
+}
+
+
+function strip_tags_content($text, $tags = '', $invert = FALSE) {
+
+  preg_match_all('/<(.+?)[\s]*\/?[\s]*>/si', trim($tags), $tags);
+  $tags = array_unique($tags[1]);
+   
+  if(is_array($tags) AND count($tags) > 0) {
+    if($invert == FALSE) {
+      return preg_replace('@<(?!(?:'. implode('|', $tags) .')\b)(\w+)\b.*?>.*?</\1>@si', '', $text);
+    }
+    else {
+      return preg_replace('@<('. implode('|', $tags) .')\b.*?>.*?</\1>@si', '', $text);
+    }
+  }
+  elseif($invert == FALSE) {
+    return preg_replace('@<(\w+)\b.*?>.*?</\1>@si', '', $text);
+  }
+  return $text;
+} 
 ?>
