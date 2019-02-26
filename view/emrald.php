@@ -1,17 +1,20 @@
 <?php 
 
+
 $url = "http://" . $_SERVER['HTTP_HOST'] . $_SERVER['PHP_SELF'];
+
 
 $conn = new PDO("mysql:host=mysql-projet2jpbanj.alwaysdata.net;dbname=projet2jpbanj_bdd", "176186", "projetBANJ");
 $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 echo "<p><b>Appel à publication Emerald</b></p>";
 
-$sql = "SELECT titreAppel, resume, dateFinSoumission, datePublication, lien, idRevue FROM appelAPublication";
+$sql = "SELECT titreAppel, resume, dateFinSoumission, datePublication, lien, idRevue, issn, titreRevue, classementHCERES, sjr, hIndex, widgetRecap FROM appelAPublication natural join revue ";
+
 $result = $conn->query($sql);
 
 echo "<table border='1px'>";
-echo "<tr><th>titreAppel</th><th>resume</th><th>dateFinSoumission</th><th>apercu</th><th>lien</th></tr>";
+echo "<tr><th>titreAppel</th><th>resume</th><th>dateFinSoumission</th><th>lien appel</th><th>titre revue</th><th>hceres</th><th>sjr</th><th>hIndex</th><th>recap</th></tr>";
 
 while($row = $result->fetch(PDO::FETCH_ASSOC)){
     $titreAppel = $row['titreAppel'];
@@ -20,15 +23,13 @@ while($row = $result->fetch(PDO::FETCH_ASSOC)){
     $resume = $row['resume'];
     $idRevue = $row['idRevue'];
 
-    $tab = infoRevue($idRevue);
-
-    $titreRevue =  $tab[0];
-    //$lienrevue = $tab[];
-    $classementHCERES = $tab[1];
-    $sjr = $tab[2];
-    $hIndex = $tab[3];
-    $widgetRecap = $tab[4];
-    //$editeur = $tab[6];
+    $titreRevue =  $row['titreRevue'];
+    //$lienrevue = $row['urlSiteRevue'];
+    $classementHCERES = $row['classementHCERES'];
+    $sjr = $row['sjr'];
+    $hIndex = $row['hIndex'];
+    $widgetRecap = $row['widgetRecap'];
+    //$editeur = $row['editeur'];
 
     //        <td>". $lienrevue ."</td>                    <td>". $editeur ."</td>
     echo "<tr>
