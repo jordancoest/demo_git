@@ -1,74 +1,123 @@
 <?php 
-
-
-$url = "http://" . $_SERVER['HTTP_HOST'] . $_SERVER['PHP_SELF'];
-
+include ("../CURL_XML_parsing/enleverCaracteresSpeciaux.php");
+include ("barreRecherche.php");
 
 $conn = new PDO("mysql:host=mysql-projet2jpbanj.alwaysdata.net;dbname=projet2jpbanj_bdd", "176186", "projetBANJ");
 $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-echo "<p><b>Appel à publication Emerald</b></p>";
-
 $sql = "SELECT titreAppel, resume, dateFinSoumission, datePublication, lien, idRevue, issn, titreRevue, classementHCERES, sjr, hIndex, widgetRecap FROM appelAPublication natural join revue ";
-
 $result = $conn->query($sql);
 
-echo "<table border='1px'>";
-echo "<tr><th>titreAppel</th><th>resume</th><th>dateFinSoumission</th><th>lien appel</th><th>titre revue</th><th>hceres</th><th>sjr</th><th>hIndex</th><th>recap</th></tr>";
+function afficheTab($tab){
+  $url = $_SERVER['PHP_SELF'];
+  echo "<p><b>Appel à publication Emerald</b></p>";
+  echo "<table border='1px'>";
+    echo "<tr><th>titreAppel</th><th>resume</th><th><a href=\"$url/emrald.php?dateFinSoumission=dateFinSoumission\">dateFinSoumission</a></th><th>lien appel</th><th>titre revue</th><th><a href=\"$url/emrald.php?hceres=hceres\">hceres</a></th><th><a href=\"$url/emrald.php?sjr=sjr\">sjr</a></th><th><a href=\"$url/emrald.php?hIndex=hIndex\">hIndex</a></th><th>recap</th></tr>";
 
-while($row = $result->fetch(PDO::FETCH_ASSOC)){
-    $titreAppel = $row['titreAppel'];
-    $lienAppel = $row['lien'];
-    $datefin = $row['dateFinSoumission'];
-    $resume = $row['resume'];
-    $idRevue = $row['idRevue'];
-
-    $titreRevue =  $row['titreRevue'];
-    //$lienrevue = $row['urlSiteRevue'];
-    $classementHCERES = $row['classementHCERES'];
-    $sjr = $row['sjr'];
-    $hIndex = $row['hIndex'];
-    $widgetRecap = $row['widgetRecap'];
-    //$editeur = $row['editeur'];
-
-    //        <td>". $lienrevue ."</td>                    <td>". $editeur ."</td>
-    echo "<tr>
-        <td>" . $titreAppel . "</td>
-        <td>" . $resume ."</td>
-        <td>". $datefin ."</td>
-        <td><a href=". $lienAppel .">lien</a></td>
-        <td>". $titreRevue ."</td>
-        <td>". $classementHCERES ."</td>
-        <td>". $sjr ."</td>
-        <td>". $hIndex ."</td>
-        <td><img src=". $widgetRecap ."></td>
-        </tr>";  //$row['index'] the index here is a field nam
+      foreach ($tab as $value) {
+        echo "<tr>";
+          echo"
+          <td>".$value['titreAppel']."</td>
+          <td><a href=" . $value["lienAppel"]. ">lien </a></td>
+          <td>". $value["datefin"]. "</td>
+          <td>". $value['resume'] ."</td>
+          <td>". $value['titreRevue'] ."</td>
+          <td>". $value['classementHCERES'] ."</td>
+          <td>". $value['sjr'] ."</td>
+          <td>". $value['hIndex'] ."</td>
+          <td><img src=". $value["widgetRecap"] ."></td>
+          ";
+        echo "</tr>";
+      }
+  echo "</table>"; //Close the table in HTML
 }
 
-echo "</table>"; //Close the table in HTML
-
-function infoRevue($idrevue){
-
-    $conn = new PDO("mysql:host=mysql-projet2jpbanj.alwaysdata.net;dbname=projet2jpbanj_bdd", "176186", "projetBANJ");
-    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-    $sql2 = "SELECT issn, titreRevue, classementHCERES, sjr, hIndex, widgetRecap/*, urlSiteRevue, editeur*/ FROM revue where idRevue = '$idrevue'";
-    $result2 = $conn->query($sql2);
-     
-    $row2 = $result2->fetch(PDO::FETCH_ASSOC);
-
-    $titreRevue =  $row2['titreRevue'];
-    //$lienrevue = $row2['urlSiteRevue'];
-    $classementHCERES = $row2['classementHCERES'];
-    $sjr = $row2['sjr'];
-    $hIndex = $row2['hIndex'];
-    $widgetRecap = $row2['widgetRecap'];
-    //$editeur = $row2['editeur'];
-
-    $donnee = array($titreRevue/*$lienrevue*/, $classementHCERES, $sjr, $hIndex, $widgetRecap /*$editeur*/);
-    return $donnee;
+function creerTab_aff($str,$op,$result){
+  $i = 0;
+  $tab=[];
+  $q=strtolower(trim(enleverCaracteresSpeciaux($str)));  
+    while($row = $result->fetch(PDO::FETCH_ASSOC)){
+      if(empty($str)){     
+             $tab[$i] = array(
+                      'titreAppel'       => $row['titreAppel'],
+                      'lienAppel'        => $row['lien'],
+                      'datefin'          => $row['dateFinSoumission'],
+                      'resume'           => $row['resume'],
+                      'idRevue'          => $row['idRevue'],
+                      'titreRevue'       => $row['titreRevue'],
+                      'classementHCERES' => $row['classementHCERES'],
+                      'sjr'              => $row['sjr'],
+                      'hIndex'           => $row['hIndex'],
+                      'widgetRecap'      => $row['widgetRecap']);
+      }else{
+          similar_text($q,strtolower(enleverCaracteresSpeciaux($row[$op])), $perc);
+          if($perc > 80){
+            $tab[$i] = array(
+                        'titreAppel'       => $row['titreAppel'],
+                        'lienAppel'        => $row['lien'],
+                        'datefin'          => $row['dateFinSoumission'],
+                        'resume'           => $row['resume'],
+                        'idRevue'          => $row['idRevue'],
+                        'titreRevue'       => $row['titreRevue'],
+                        'classementHCERES' => $row['classementHCERES'],
+                        'sjr'              => $row['sjr'],
+                        'hIndex'           => $row['hIndex'],
+                        'widgetRecap'      => $row['widgetRecap']);
+            
+          }
+      }
+      $i++;
+    }
+return $tab;
 }
 
+function array_sort($array, $on, $order=SORT_ASC) {
+    $new_array = array();
+    $sortable_array = array();
+
+    if (count($array) > 0) {
+        foreach ($array as $k => $v) {
+            if (is_array($v)) {
+                foreach ($v as $k2 => $v2) {
+                    if ($k2 == $on) {
+                        $sortable_array[$k] = $v2;
+                    }
+                }
+            } else {
+                $sortable_array[$k] = $v;
+            }
+        }
+
+        switch ($order) {
+            case SORT_ASC:
+                asort($sortable_array);
+            break;
+            case SORT_DESC:
+                arsort($sortable_array);
+            break;
+        }
+
+        foreach ($sortable_array as $k => $v) {
+            $new_array[$k] = $array[$k];
+        }
+    }
+
+    return $new_array;
+}
+
+  //$tab = creerTab($result);
+  if(isset($_GET['ftext']))
+      $tab = creerTab_aff($_GET['ftext'],$_GET['op'],$result);
+  else
+      $tab = creerTab_aff(NULL,NULL,$result);
+
+  echo "<pre>";
+  //var_dump($tab);
+  if(isset($_GET['hIndex'])){                   afficheTab(array_sort($tab, 'hIndex', SORT_DESC));}
+  elseif(isset($_GET['dateFinSoumission'])){    afficheTab(array_sort($tab, 'datefin', SORT_DESC));}
+  elseif(isset($_GET['sjr'])){                  afficheTab(array_sort($tab, 'sjr', SORT_DESC));}
+  elseif(isset($_GET['hceres'])){               afficheTab(array_sort($tab, 'classementHCERES', SORT_ASC));}
+  else{    afficheTab($tab);   }
+  echo "</pre>";
 
 $conn = null;
 
