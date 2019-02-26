@@ -8,7 +8,7 @@ include('simple_html_dom.php'); // Manuel : http://simplehtmldom.sourceforge.net
 $db = new PDO("mysql:host=mysql-projet2jpbanj.alwaysdata.net;dbname=projet2jpbanj_bdd", "176186", "projetBANJ");
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-$requeteListeDesID = "SELECT idSJR FROM revue WHERE sjr is null";
+$requeteListeDesID = "SELECT idSJR FROM revue WHERE sjr is null"; // Attention enlever la condition where quand tout est fini
 $stmt = $db->query($requeteListeDesID);
 $listeDesID = $stmt->fetchall();
 
