@@ -49,8 +49,8 @@ function creerTab_aff($str,$op,$result){
                       'hIndex'           => $row['hIndex'],
                       'widgetRecap'      => $row['widgetRecap']);
       }else{
-          similar_text($q,strtolower(enleverCaracteresSpeciaux($row[$op])), $perc);
-          if($perc > 80){
+          if (mb_substr_count(strtolower(enleverCaracteresSpeciaux($row[$op])), $q) >0)
+          {
             $tab[$i] = array(
                         'titreAppel'       => $row['titreAppel'],
                         'lienAppel'        => $row['lien'],
@@ -62,8 +62,7 @@ function creerTab_aff($str,$op,$result){
                         'sjr'              => $row['sjr'],
                         'hIndex'           => $row['hIndex'],
                         'widgetRecap'      => $row['widgetRecap']);
-            
-          }
+            }
       }
       $i++;
     }
@@ -105,10 +104,12 @@ function array_sort($array, $on, $order=SORT_ASC) {
 }
 
   //$tab = creerTab($result);
-  if(isset($_GET['ftext']))
+  if(isset($_GET['ftext']) && isset($_GET['op']))
       $tab = creerTab_aff($_GET['ftext'],$_GET['op'],$result);
-  else
-      $tab = creerTab_aff(NULL,NULL,$result);
+  else{
+    $tab = creerTab_aff(NULL,NULL,$result);
+    echo 'Il faut cocher !';
+  }
 
   echo "<pre>";
   //var_dump($tab);
