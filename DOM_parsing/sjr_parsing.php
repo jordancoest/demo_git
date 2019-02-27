@@ -8,15 +8,15 @@ include('simple_html_dom.php'); // Manuel : http://simplehtmldom.sourceforge.net
 $db = new PDO("mysql:host=mysql-projet2jpbanj.alwaysdata.net;dbname=projet2jpbanj_bdd", "176186", "projetBANJ");
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-$requeteListeDesID = "SELECT idSJR FROM revue WHERE sjr is null"; // Attention enlever la condition where quand tout est fini
+//parsing_revue(25501, $db);
+
+$requeteListeDesID = "SELECT idSJR FROM revue";
 $stmt = $db->query($requeteListeDesID);
 $listeDesID = $stmt->fetchall();
 
 foreach ($listeDesID as $idSJR) {
     if ($idSJR[0] != NULL) parsing_revue($idSJR[0], $db);
 }
-
-//parsing_revue(21100371975, $db);
 
 function parsing_revue($idRevueSJR, $bdd){
 
@@ -26,6 +26,8 @@ function parsing_revue($idRevueSJR, $bdd){
     // Titre de la revue
     $titre = $html->find('title', 0)->innertext;
     $titre=str_replace("'","\'",$titre);
+    $titre=str_replace("–","-",$titre);
+    $titre=str_replace("Ä","A",$titre);
     $titre=utf8_encode($titre);
     //echo 'Titre : ' . $titre . '<br>';
 
@@ -44,19 +46,21 @@ function parsing_revue($idRevueSJR, $bdd){
 
     // EDITEUR
     $editeur = $html->find('a[title="view all publisher\'s journals"]', 0)->innertext;
+    $editeur=str_replace("'","\'",$editeur);
+    if ($editeur == "") $editeur = "NC";
     //echo 'Nom de l\'éditeur : ' . $editeur . '<br>';
 
-    // LIEN DU JOURNAL
+    // LIEN VERS LA REVUE
     if (isset($html->find('a[id="question_journal"]', 0)->href)){
         $lien = $html->find('a[id="question_journal"]', 0)->href;
-        //echo 'Lien vers le journal : ' . $lien . '<br><br>';
+        //echo 'Lien vers la revue : ' . $lien . '<br><br>';
     }
     else{
-        $lien = 'Pas de lien dispo pour le journal';
+        $lien = "NC";
         //echo $lien.'<br><br>';
     }
 
-    $sql = "UPDATE revue SET titreRevue='$titre', hIndex=$hindex, widgetRecap='$widget', sjr=$sjr WHERE idSJR=$idRevueSJR";
+    $sql = "UPDATE revue SET titreRevue='$titre', hIndex=$hindex, widgetRecap='$widget', sjr=$sjr, editeur='$editeur', urlSiteRevue='$lien' WHERE idSJR=$idRevueSJR";
     $bdd->exec($sql);
 
 }
