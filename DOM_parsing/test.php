@@ -9,6 +9,8 @@
 	foreach($html->find('div[id="pgSectionCn"] p') as $e){
 	    //echo "div ".$e->innertext  . '<br>';
 	    $text = $text.$e->innertext;
+	    echo "salut";
+	    echo "salut";
 	}
 	
 ?>
